@@ -1,7 +1,7 @@
 
 # PIC18F8722 Assembly Programs
 **Name:** Prithvi Snehal  
-**Student ID:** 11691120  
+**Student ID:** 11591120  
 
 A collection of PIC18F8722 assembly programs written in MPLAB X 
 using XC8 assembler, as part of my microcontroller coursework.
