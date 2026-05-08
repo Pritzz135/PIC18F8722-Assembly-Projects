@@ -2,15 +2,15 @@
 ; Author         : Prithvi Snehal
 ; Student ID     : 11691120
 ; Microcontroller: PIC18F8722
-; File Name      : blink_control.asm
-; Project Type   : Timing and LED Blink Control
+; File Name      : blink_timing_control.asm
+; Project Type   : LED Blink Timing Control
 ;
 ; Description:
-; This project controls LED blinking using push buttons
-; and timing delay subroutines. Different delay intervals
-; are implemented using nested software delay loops.
+; This project controls LED blinking speed using
+; push-button inputs and software timing delays.
+; Fast and slow blinking modes are implemented
+; using nested delay subroutines.
 ; =========================================================
-
 processor 18F8722
 radix dec
 
@@ -22,20 +22,15 @@ CONFIG LVP = OFF
 #include <xc.inc>
     
 PSECT udata_acs
-global var_count_200us, var_count_40ms, var_count_400ms
-var_count_200us: ds 1
+global var_count_40ms, var_count_400ms
 var_count_40ms: ds 1
 var_count_400ms:ds 1
-    
-; PSECTS should be unindented
+
 PSECT resetVector, class=CODE, reloc=2
 resetVector:
-    goto start ; Inline comments should be separated by 1 or 2 tabs.
-; This is optional but helps with readability
-
-; PSECTS should be unindented
+    goto start 
+    
 PSECT start, class=CODE, reloc=2
-; Labels again are unindented
 start:
 ;Set all TRIS
     clrf TRISF, a ;To set for LEDS
@@ -44,62 +39,57 @@ start:
     setf TRISB, a
     setf TRISJ, a
     
-    btfss PORTJ, 5, a
-	bra PB1_pressed
-    btfsc PORTB, 0, a
-	bra start
     movlw 00000001B
     movwf LATF, a
+Loop_Main:
+    btfss PORTJ, 5, a
+    bra Loop_400ms
+    
+    btfsc PORTB, 0, a
+    bra Loop_Main
+    
     bsf LATA, 4, a
     call sub_40ms
-    movlw 00000000B
-    movwf LATF, a
-    bsf LATA, 4, a
+    bcf LATA, 4, a
     call sub_40ms
-    
-loop:
-bra start
-    
-    ;Basic subroutines
-sub_200us:
+    bra Loop_Main
+
+Loop_400ms:
+    bsf LATA, 4, a
+    call sub_400ms
+    bcf LATA, 4, a
+    call sub_400ms
+    bra Loop_Main
+
+sub_196us: 
+    movlb 0x4
     movlw 71
-    movwf var_count_200us, a
-l_delay:
+    movwf 0x00, b
+delay_196us:
+    nop 
     nop
     nop
     nop
-    nop
-    decf var_count_200us, a
-    bnz l_delay
+    decf 0x00, b 
+    bnz delay_196us
     return
-    
+
 sub_40ms:
     movlw 199
     movwf var_count_40ms, a
-innerloop_delay:
-    call sub_200us
+delay_40ms:
+    call sub_196us
     decf var_count_40ms, a
-    bnz innerloop_delay
+    bnz delay_40ms
     return
-
+    
 sub_400ms:
-    movlw 9 
+    movlw 10
     movwf var_count_400ms, a
-innerloop_delay_2:
+delay_400ms:
     call sub_40ms
     decf var_count_400ms, a
-    bnz innerloop_delay_2
+    bnz delay_400ms
     return
-    
-PB1_pressed:
-    movlw 00000001B
-    movwf LATF, a
-    bsf LATA, 4, a
-    call sub_400ms
-    movlw 00000000B
-    movwf LATF, a
-    bsf LATA, 4, a
-    call sub_400ms
-    
-    bra start
+
 end
