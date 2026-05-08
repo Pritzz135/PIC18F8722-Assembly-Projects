@@ -1,0 +1,76 @@
+processor 18F8722
+radix dec
+
+CONFIG OSC = HS 
+CONFIG WDT = OFF 
+CONFIG LVP = OFF
+    
+; Defines
+#include <xc.inc>
+    
+PSECT udata_acs
+global var_count_5ms, var_count_100us, counter
+var_count_5ms: ds 1
+var_count_100us:ds 1
+counter: ds 1
+
+PSECT resetVector, class=CODE, reloc=2
+resetVector:
+    goto start 
+    
+PSECT start, class=CODE, reloc=2
+start:
+;Set all TRIS
+    clrf TRISF, a ;To set for LEDS
+    bcf TRISA, 4, a ;Set RA4 as output for Q3
+    
+    setf TRISB, a
+    setf TRISJ, a
+    setf TRISC, a
+    clrf LATF, a
+    
+    btfsc PORTB, 0, a
+    bra start
+    bsf LATA, 4, a
+    movlw 0
+    movwf counter, a
+Loop_Main:
+    incf counter, a
+    movf counter, W, a
+    movwf LATF, a
+    btfss PORTJ, 5, a
+    bra terminate
+    call sub_5ms
+    bra Loop_Main
+
+terminate:
+    btfss PORTC, 2, a
+    bra restart
+    bra terminate
+
+restart:
+    clrf counter, a
+    bra start
+    
+sub_100us:
+    movlw 35
+    movwf var_count_100us, a
+l_delay:
+    nop
+    nop
+    nop
+    nop
+    decf var_count_100us, a
+    bnz l_delay
+    return
+    
+sub_5ms:
+    movlw 49
+    movwf var_count_5ms, a
+l_delay2:
+    call sub_100us
+    decf var_count_5ms, a
+    bnz l_delay2
+    return
+
+end
